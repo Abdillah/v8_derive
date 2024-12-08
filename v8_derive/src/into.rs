@@ -75,30 +75,8 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::into::IntoValue;
+    use crate::{into::IntoValue, setup};
     use v8::{ContextOptions, CreateParams};
-
-    mod setup {
-        use std::sync::Once;
-
-        /// Set up global state for a test
-        pub(super) fn setup_test() {
-            initialize_once();
-        }
-
-        fn initialize_once() {
-            static START: Once = Once::new();
-            START.call_once(|| {
-          v8::V8::set_flags_from_string(
-            "--no_freeze_flags_after_init --expose_gc --harmony-import-assertions --harmony-shadow-realm --allow_natives_syntax --turbo_fast_api_calls",
-          );
-          v8::V8::initialize_platform(
-            v8::new_unprotected_default_platform(0, false).make_shared(),
-          );
-          v8::V8::initialize();
-        });
-        }
-    }
 
     #[test]
     #[allow(clippy::cast_possible_wrap)]

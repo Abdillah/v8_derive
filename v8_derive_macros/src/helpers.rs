@@ -59,6 +59,10 @@ pub(crate) fn quote_get_field_as(
         quote! {
             #get_operation(stringify!(#identifier), input, scope, v8_derive::helpers::try_as_bool)?
         }
+    } else if ident == "i8" {
+        quote! {
+            #get_operation(stringify!(#identifier), input, scope, v8_derive::helpers::try_as_i8)?
+        }
     } else if ident == "i32" {
         quote! {
             #get_operation(stringify!(#identifier), input, scope, v8_derive::helpers::try_as_i32)?

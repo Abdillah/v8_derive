@@ -7,6 +7,10 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Data;
 
+/// Derive `TryFromValue` for a struct
+/// 
+/// # Panics
+/// When the input is not a struct
 #[proc_macro_derive(FromValue)]
 pub fn try_from_value(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = syn::parse_macro_input!(item as syn::DeriveInput);
@@ -66,6 +70,10 @@ pub fn try_from_value(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
     .into()
 }
 
+/// Derive `IntoValue` for a struct
+/// 
+/// # Panics
+/// When the input is not a struct
 #[proc_macro_derive(IntoValue)]
 pub fn into_value(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = syn::parse_macro_input!(item as syn::DeriveInput);
@@ -115,3 +123,4 @@ pub fn into_value(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
     }
     .into()
 }
+

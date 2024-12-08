@@ -129,6 +129,14 @@ pub fn try_as_f32<'a>(
     Ok(i as f32)
 }
 
+pub fn try_as_i8<'a>(
+    input: &'a v8::Local<'a, v8::Value>,
+    scope: &'a mut v8::ContextScope<'_, v8::HandleScope<'_>>,
+) -> errors::Result<i8> {
+    let i = try_as_i32(input, scope)?;
+    i8::try_from(i).map_err(|_| errors::Error::OutOfRange)
+}
+
 pub fn try_as_vec<'a, T>(
     input: &'a v8::Local<'a, v8::Value>,
     scope: &'a mut v8::ContextScope<'_, v8::HandleScope<'_>>,
@@ -146,10 +154,37 @@ where
     let mut result = Vec::with_capacity(length as usize);
 
     for i in 0..length {
-        let element = array.get_index(scope, i).unwrap();
+        let Some(element) = array.get_index(scope, i) else {
+            // this should never happen
+            continue;
+        };
+
         let element = T::try_from_value(&element, scope)?;
         result.push(element);
     }
 
     Ok(result)
+}
+
+#[cfg(test)]
+pub(crate) mod setup {
+    use std::sync::Once;
+
+    /// Set up global state for a test
+    pub(crate) fn setup_test() {
+        initialize_once();
+    }
+
+    fn initialize_once() {
+        static START: Once = Once::new();
+        START.call_once(|| {
+  v8::V8::set_flags_from_string(
+    "--no_freeze_flags_after_init --expose_gc --harmony-import-assertions --harmony-shadow-realm --allow_natives_syntax --turbo_fast_api_calls",
+  );
+  v8::V8::initialize_platform(
+    v8::new_unprotected_default_platform(0, false).make_shared(),
+  );
+  v8::V8::initialize();
+});
+    }
 }

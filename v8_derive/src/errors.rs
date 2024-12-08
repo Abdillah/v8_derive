@@ -25,6 +25,8 @@ pub enum Error {
     ExpectedI64,
     #[error("Conversion failed; Expected Number")]
     ExpectedF64,
+    #[error("Conversion failed; Value out of range")]
+    OutOfRange,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

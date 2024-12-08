@@ -56,6 +56,7 @@ macro_rules! impl_try_from_value {
 impl_try_from_value! {
     bool => try_as_bool,
     String => try_as_string,
+    i8 => try_as_i8,
     i32 => try_as_i32,
     i64 => try_as_i64,
     f64 => try_as_f64,
@@ -65,31 +66,9 @@ impl_try_from_value! {
 
 #[cfg(test)]
 mod tests {
-    use crate::{self as v8_derive, from::TryFromValue};
+    use crate::{self as v8_derive, from::TryFromValue, setup};
     use v8::{ContextOptions, CreateParams, Local, Value};
     use v8_derive_macros::FromValue;
-
-    mod setup {
-        use std::sync::Once;
-
-        /// Set up global state for a test
-        pub(super) fn setup_test() {
-            initialize_once();
-        }
-
-        fn initialize_once() {
-            static START: Once = Once::new();
-            START.call_once(|| {
-      v8::V8::set_flags_from_string(
-        "--no_freeze_flags_after_init --expose_gc --harmony-import-assertions --harmony-shadow-realm --allow_natives_syntax --turbo_fast_api_calls",
-      );
-      v8::V8::initialize_platform(
-        v8::new_unprotected_default_platform(0, false).make_shared(),
-      );
-      v8::V8::initialize();
-    });
-        }
-    }
 
     #[derive(FromValue)]
     struct SimpleObject {
