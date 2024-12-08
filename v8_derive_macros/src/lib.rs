@@ -8,7 +8,7 @@ use quote::quote;
 use syn::Data;
 
 /// Derive `TryFromValue` for a struct
-/// 
+///
 /// # Panics
 /// When the input is not a struct
 #[proc_macro_derive(FromValue)]
@@ -71,7 +71,7 @@ pub fn try_from_value(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
 }
 
 /// Derive `IntoValue` for a struct
-/// 
+///
 /// # Panics
 /// When the input is not a struct
 #[proc_macro_derive(IntoValue)]
@@ -108,7 +108,6 @@ pub fn into_value(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
             quote! {
                 #[automatically_derived]
                 impl v8_derive::IntoValue for #struct_identifier {
-            
                     fn into_value<'a>(self, scope: &'_ mut v8::ContextScope<'_, v8::HandleScope<'a>>) -> v8::Local<'a, v8::Value> {
                         let object = v8::Object::new(scope);
                         #implementation
@@ -123,4 +122,3 @@ pub fn into_value(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
     }
     .into()
 }
-
