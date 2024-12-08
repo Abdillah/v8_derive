@@ -6,6 +6,8 @@ These annotations make it easier to convert JavaScript Values to Rust structs an
 
 ## Usage
 
+See the [v8_derive_example](https://github.com/mibes404/v8_derive/tree/main/v8_derive_sample) for a complete example.
+
 ```rust
 use v8::{ContextOptions, CreateParams};
 use v8_derive::{IntoValue, TryFromValue};
@@ -32,6 +34,7 @@ fn main() {
 
 - `bool`
 - `String`
+- `i8`
 - `i32`
 - `i64`
 - `f64`
