@@ -1,0 +1,3 @@
+[workspace]
+members = ["v8_derive_sample", "v8_derive", "v8_derive_macros"]
+resolver = "2"

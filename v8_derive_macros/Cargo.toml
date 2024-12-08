@@ -1,0 +1,14 @@
+[package]
+name = "v8_derive_macros"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+v8 = "130"
+syn = "2.0.90"
+quote = "1.0.37"
+proc-macro2 = "1.0.92"
+darling = "0.20.10"

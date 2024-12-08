@@ -1,0 +1,9 @@
+[package]
+name = "v8_derive"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+v8 = "130"
+thiserror = "2.0"
+v8_derive_macros = { path = "../v8_derive_macros" }

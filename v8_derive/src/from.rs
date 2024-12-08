@@ -1,0 +1,221 @@
+use crate::{errors, helpers::*, try_as_vec};
+
+pub trait TryFromValue {
+    fn try_from_value<'a>(
+        input: &'a v8::Local<'a, v8::Value>,
+        scope: &'a mut v8::ContextScope<'_, v8::HandleScope<'_>>,
+    ) -> errors::Result<Self>
+    where
+        Self: Sized;
+}
+
+impl<T> TryFromValue for Vec<T>
+where
+    T: TryFromValue,
+{
+    fn try_from_value<'a>(
+        input: &'a v8::Local<'a, v8::Value>,
+        scope: &'a mut v8::ContextScope<'_, v8::HandleScope<'_>>,
+    ) -> errors::Result<Self> {
+        try_as_vec(input, scope)
+    }
+}
+
+impl<T> TryFromValue for Option<T>
+where
+    T: TryFromValue,
+{
+    fn try_from_value<'a>(
+        input: &'a v8::Local<'a, v8::Value>,
+        scope: &'a mut v8::ContextScope<'_, v8::HandleScope<'_>>,
+    ) -> errors::Result<Self> {
+        if input.is_null_or_undefined() {
+            return Ok(None);
+        }
+
+        let value = T::try_from_value(input, scope)?;
+        Ok(Some(value))
+    }
+}
+
+macro_rules! impl_try_from_value {
+    ($($t:ty => $func:ident),*) => {
+        $(
+            impl TryFromValue for $t {
+                fn try_from_value<'a>(
+                    input: &'a v8::Local<'a, v8::Value>,
+                    scope: &'a mut v8::ContextScope<'_, v8::HandleScope<'_>>,
+                ) -> errors::Result<Self> {
+                    $func(input, scope)
+                }
+            }
+        )*
+    };
+}
+
+impl_try_from_value! {
+    bool => try_as_bool,
+    String => try_as_string,
+    i32 => try_as_i32,
+    i64 => try_as_i64,
+    f64 => try_as_f64,
+    u32 => try_as_u32,
+    f32 => try_as_f32
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{self as v8_derive, from::TryFromValue};
+    use v8::{ContextOptions, CreateParams, Local, Value};
+    use v8_derive_macros::FromValue;
+
+    mod setup {
+        use std::sync::Once;
+
+        /// Set up global state for a test
+        pub(super) fn setup_test() {
+            initialize_once();
+        }
+
+        fn initialize_once() {
+            static START: Once = Once::new();
+            START.call_once(|| {
+      v8::V8::set_flags_from_string(
+        "--no_freeze_flags_after_init --expose_gc --harmony-import-assertions --harmony-shadow-realm --allow_natives_syntax --turbo_fast_api_calls",
+      );
+      v8::V8::initialize_platform(
+        v8::new_unprotected_default_platform(0, false).make_shared(),
+      );
+      v8::V8::initialize();
+    });
+        }
+    }
+
+    #[derive(FromValue)]
+    struct SimpleObject {
+        yes_no: bool,
+        name: String,
+        age: i32,
+        opt: Option<i32>,
+        avg: f64,
+    }
+
+    #[derive(FromValue)]
+    struct OptionalObject {
+        opt: Option<i32>,
+    }
+
+    #[test]
+    fn should_be_able_to_parse_primitives() {
+        setup::setup_test();
+        let isolate = &mut v8::Isolate::new(CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        // bool
+        let js_bool_val = v8::Boolean::new(scope, true).into();
+        let bool_val = bool::try_from_value(&js_bool_val, scope).unwrap();
+        assert!(bool_val);
+
+        // String
+        let js_string_val = v8::String::new(scope, "Hello, World!").unwrap().into();
+        let string_val = String::try_from_value(&js_string_val, scope).unwrap();
+        assert_eq!(string_val, "Hello, World!");
+
+        // i32
+        let js_int_val = v8::Integer::new(scope, 42).into();
+        let int_val = i32::try_from_value(&js_int_val, scope).unwrap();
+        assert_eq!(int_val, 42);
+
+        // Vec<i32>
+        let js_array = v8::Array::new(scope, 3);
+        let js_val_1 = v8::Integer::new(scope, 1);
+        js_array.set_index(scope, 0, js_val_1.into());
+        let js_val_2 = v8::Integer::new(scope, 2);
+        js_array.set_index(scope, 1, js_val_2.into());
+        let js_val_3 = v8::Integer::new(scope, 3);
+        js_array.set_index(scope, 2, js_val_3.into());
+        let array_val = Vec::<i32>::try_from_value(&js_array.into(), scope).unwrap();
+        assert_eq!(array_val, vec![1, 2, 3]);
+
+        // Option<i32>
+        let js_null = v8::null(scope).into();
+        let null_val = Option::<i32>::try_from_value(&js_null, scope).unwrap();
+        assert!(null_val.is_none());
+    }
+
+    #[test]
+    #[allow(clippy::float_cmp)]
+    fn should_be_able_to_parse_a_simple_object() {
+        setup::setup_test();
+        let isolate = &mut v8::Isolate::new(CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+        let object = v8::Object::new(scope);
+        // yes_no
+        let js_key = v8::String::new(scope, "yes_no").unwrap().into();
+        let js_bool_val = v8::Boolean::new(scope, true).into();
+        object.set(scope, js_key, js_bool_val);
+        // name
+        let js_key = v8::String::new(scope, "name").unwrap().into();
+        let js_bool_val = v8::String::new(scope, "Marcel").unwrap().into();
+        object.set(scope, js_key, js_bool_val);
+        // age
+        let js_key = v8::String::new(scope, "age").unwrap().into();
+        let js_bool_val = v8::Integer::new(scope, 30).into();
+        object.set(scope, js_key, js_bool_val);
+        // opt
+        let js_key = v8::String::new(scope, "opt").unwrap().into();
+        let js_bool_val = v8::Integer::new(scope, 42).into();
+        object.set(scope, js_key, js_bool_val);
+        // avg
+        let js_key = v8::String::new(scope, "avg").unwrap().into();
+        let js_bool_val = v8::Number::new(scope, 42.42).into();
+        object.set(scope, js_key, js_bool_val);
+
+        let object: Local<'_, Value> = object.cast();
+        let s: SimpleObject = SimpleObject::try_from_value(&object, scope).expect("failed to deserialize");
+        assert!(s.yes_no);
+        assert_eq!(s.name, "Marcel");
+        assert_eq!(s.age, 30);
+        assert_eq!(s.opt, Some(42));
+        assert_eq!(s.avg, 42.42);
+    }
+
+    #[test]
+    fn should_be_able_to_handle_optional_fields() {
+        setup::setup_test();
+        let isolate = &mut v8::Isolate::new(CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        // Some value
+        let object = v8::Object::new(scope);
+        let js_key = v8::String::new(scope, "opt").unwrap().into();
+        let js_bool_val = v8::Integer::new(scope, 42).into();
+        object.set(scope, js_key, js_bool_val);
+
+        let object: Local<'_, Value> = object.cast();
+        let s: OptionalObject = OptionalObject::try_from_value(&object, scope).expect("failed to deserialize");
+        assert_eq!(s.opt, Some(42));
+
+        // Null value
+        let object = v8::Object::new(scope);
+        let js_key = v8::String::new(scope, "opt").unwrap().into();
+        let js_bool_val = v8::null(scope).into();
+        object.set(scope, js_key, js_bool_val);
+
+        let object: Local<'_, Value> = object.cast();
+        let s: OptionalObject = OptionalObject::try_from_value(&object, scope).expect("failed to deserialize");
+        assert_eq!(s.opt, None);
+
+        // Missing value
+        let object = v8::Object::new(scope);
+        let object: Local<'_, Value> = object.cast();
+        let s: OptionalObject = OptionalObject::try_from_value(&object, scope).expect("failed to deserialize");
+        assert_eq!(s.opt, None);
+    }
+}
