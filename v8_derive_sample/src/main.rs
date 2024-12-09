@@ -24,8 +24,11 @@ fn main() {
         opt: Some(42),
     };
 
+    // Nest the Rust object
+    let parent_obj = ParentObject { nested: obj };
+
     // Convert the Rust object to a Vec
-    let short_vec = vec![obj];
+    let short_vec = vec![parent_obj];
 
     // Initialize V8
     v8::V8::set_flags_from_string(
@@ -44,10 +47,11 @@ fn main() {
     let js_obj = short_vec.into_value(scope);
 
     // Convert the JS Value back to a Rust object
-    let rust_vec_obj = Vec::<SimpleObject>::try_from_value(&js_obj, scope).unwrap();
+    let rust_vec_obj = Vec::<ParentObject>::try_from_value(&js_obj, scope).unwrap();
 
     // Verify the Rust object
-    let rust_obj = rust_vec_obj.first().unwrap();
+    let rust_parent_obj = rust_vec_obj.first().unwrap();
+    let rust_obj = &rust_parent_obj.nested;
     assert!(rust_obj.yes_no);
     assert_eq!(rust_obj.name, "John");
     assert_eq!(rust_obj.age, 42);
