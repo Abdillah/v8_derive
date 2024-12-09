@@ -10,6 +10,11 @@ struct SimpleObject {
     opt: Option<i32>,
 }
 
+#[derive(FromValue, IntoValue)]
+struct ParentObject {
+    nested: SimpleObject,
+}
+
 fn main() {
     // Create a Rust object
     let obj = SimpleObject {

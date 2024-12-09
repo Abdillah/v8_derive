@@ -70,7 +70,7 @@ mod tests {
     use v8::{ContextOptions, CreateParams, Local, Value};
     use v8_derive_macros::FromValue;
 
-    #[derive(FromValue)]
+    #[derive(Debug, FromValue)]
     struct SimpleObject {
         yes_no: bool,
         name: String,
@@ -82,6 +82,32 @@ mod tests {
     #[derive(FromValue)]
     struct OptionalObject {
         opt: Option<i32>,
+    }
+
+    #[derive(Debug, FromValue)]
+    struct ParentObject {
+        nested: SimpleObject,
+    }
+
+    #[test]
+    fn should_be_able_to_handle_incomplete_values() {
+        setup::setup_test();
+        let isolate = &mut v8::Isolate::new(CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        // null
+        let js_null = v8::null(scope).into();
+        SimpleObject::try_from_value(&js_null, scope).expect_err("can't deserialize null");
+
+        // missing mandatory field
+        let object = v8::Object::new(scope);
+        let js_key = v8::String::new(scope, "yes_no").unwrap().into();
+        let js_bool_val = v8::Boolean::new(scope, true).into();
+        object.set(scope, js_key, js_bool_val);
+        let object: Local<'_, Value> = object.cast();
+        SimpleObject::try_from_value(&object, scope).expect_err("can't deserialize with missing field");
     }
 
     #[test]

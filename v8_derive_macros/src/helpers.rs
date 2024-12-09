@@ -93,7 +93,10 @@ pub(crate) fn quote_get_field_as(
         let ident = get_ident(type_path);
         quote_get_field_as(ident, identifier, field, true)?
     } else {
-        return None;
+        // Assume the type is a struct and try to convert it
+        quote! {
+            #get_operation(stringify!(#identifier), input, scope, #ident::try_from_value)?
+        }
     })
 }
 
