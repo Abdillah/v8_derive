@@ -1,8 +1,11 @@
 [package]
 name = "v8_derive_macros"
+description = "Derive macros for Rusty v8"
 version = "0.1.0"
 edition = "2021"
 authors = ["Marcel Ibes <mibes@avaya.com>"]
+license = "MIT"
+repository = "https://github.com/mibes404/v8_derive.git"
 
 [lib]
 proc-macro = true
