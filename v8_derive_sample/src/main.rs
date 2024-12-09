@@ -27,7 +27,7 @@ fn main() {
     // Nest the Rust object
     let parent_obj = ParentObject { nested: obj };
 
-    // Convert the Rust object to a Vec
+    // Create a Vec with the Rust object
     let short_vec = vec![parent_obj];
 
     // Initialize V8
