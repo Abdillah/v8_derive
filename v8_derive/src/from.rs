@@ -6,7 +6,7 @@ use crate::{errors, helpers::*, try_as_vec};
 pub trait TryFromValue {
     fn try_from_value<'a>(
         input: &'a v8::Local<'a, v8::Value>,
-        scope: &'a mut v8::ContextScope<'_, v8::HandleScope<'_>>,
+        scope: &'a mut v8::HandleScope<'_, v8::Context>,
     ) -> errors::Result<Self>
     where
         Self: Sized;
@@ -18,7 +18,7 @@ where
 {
     fn try_from_value<'a>(
         input: &'a v8::Local<'a, v8::Value>,
-        scope: &'a mut v8::ContextScope<'_, v8::HandleScope<'_>>,
+        scope: &'a mut v8::HandleScope<'_, v8::Context>,
     ) -> errors::Result<Self> {
         try_as_vec(input, scope)
     }
@@ -30,7 +30,7 @@ where
 {
     fn try_from_value<'a>(
         input: &'a v8::Local<'a, v8::Value>,
-        scope: &'a mut v8::ContextScope<'_, v8::HandleScope<'_>>,
+        scope: &'a mut v8::HandleScope<'_, v8::Context>,
     ) -> errors::Result<Self> {
         if input.is_null_or_undefined() {
             return Ok(None);
@@ -47,7 +47,7 @@ macro_rules! impl_try_from_value {
             impl TryFromValue for $t {
                 fn try_from_value<'a>(
                     input: &'a v8::Local<'a, v8::Value>,
-                    scope: &'a mut v8::ContextScope<'_, v8::HandleScope<'_>>,
+                    scope: &'a mut v8::HandleScope<'_, v8::Context>,
                 ) -> errors::Result<Self> {
                     $func(input, scope)
                 }

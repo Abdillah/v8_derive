@@ -2,47 +2,47 @@
 
 /// The `IntoValue` trait is used to convert a Rust type into a v8 Value.
 pub trait IntoValue {
-    fn into_value<'a>(self, scope: &'_ mut v8::ContextScope<'_, v8::HandleScope<'a>>) -> v8::Local<'a, v8::Value>;
+    fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value>;
 }
 
 impl IntoValue for bool {
-    fn into_value<'a>(self, scope: &'_ mut v8::ContextScope<'_, v8::HandleScope<'a>>) -> v8::Local<'a, v8::Value> {
+    fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
         v8::Boolean::new(scope, self).into()
     }
 }
 
 impl IntoValue for i32 {
-    fn into_value<'a>(self, scope: &'_ mut v8::ContextScope<'_, v8::HandleScope<'a>>) -> v8::Local<'a, v8::Value> {
+    fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
         v8::Integer::new(scope, self).into()
     }
 }
 
 impl IntoValue for u32 {
-    fn into_value<'a>(self, scope: &'_ mut v8::ContextScope<'_, v8::HandleScope<'a>>) -> v8::Local<'a, v8::Value> {
+    fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
         v8::Integer::new_from_unsigned(scope, self).into()
     }
 }
 
 impl IntoValue for i64 {
-    fn into_value<'a>(self, scope: &'_ mut v8::ContextScope<'_, v8::HandleScope<'a>>) -> v8::Local<'a, v8::Value> {
+    fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
         v8::BigInt::new_from_i64(scope, self).into()
     }
 }
 
 impl IntoValue for f64 {
-    fn into_value<'a>(self, scope: &'_ mut v8::ContextScope<'_, v8::HandleScope<'a>>) -> v8::Local<'a, v8::Value> {
+    fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
         v8::Number::new(scope, self).into()
     }
 }
 
 impl IntoValue for f32 {
-    fn into_value<'a>(self, scope: &'_ mut v8::ContextScope<'_, v8::HandleScope<'a>>) -> v8::Local<'a, v8::Value> {
+    fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
         (self as f64).into_value(scope)
     }
 }
 
 impl IntoValue for String {
-    fn into_value<'a>(self, scope: &'_ mut v8::ContextScope<'_, v8::HandleScope<'a>>) -> v8::Local<'a, v8::Value> {
+    fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
         v8::String::new(scope, &self).unwrap_or(v8::String::empty(scope)).into()
     }
 }
@@ -51,7 +51,7 @@ impl<T> IntoValue for Option<T>
 where
     T: IntoValue,
 {
-    fn into_value<'a>(self, scope: &'_ mut v8::ContextScope<'_, v8::HandleScope<'a>>) -> v8::Local<'a, v8::Value> {
+    fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
         match self {
             Some(value) => value.into_value(scope),
             None => v8::null(scope).into(),
@@ -63,7 +63,7 @@ impl<T> IntoValue for Vec<T>
 where
     T: IntoValue,
 {
-    fn into_value<'a>(self, scope: &'_ mut v8::ContextScope<'_, v8::HandleScope<'a>>) -> v8::Local<'a, v8::Value> {
+    fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
         let l = i32::try_from(self.len()).unwrap_or(i32::MAX);
         let array = v8::Array::new(scope, l);
 

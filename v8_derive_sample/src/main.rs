@@ -39,9 +39,9 @@ fn main() {
 
     // Setup the V8 context
     let isolate = &mut v8::Isolate::new(CreateParams::default());
-    let scope = &mut v8::HandleScope::new(isolate);
-    let context = v8::Context::new(scope, ContextOptions::default());
-    let scope = &mut v8::ContextScope::new(scope, context);
+    let handle_scope = &mut v8::HandleScope::new(isolate);
+    let context = v8::Context::new(handle_scope, ContextOptions::default());
+    let scope = &mut v8::ContextScope::new(handle_scope, context);
 
     // Convert the Rust object to a JS Value
     let js_obj = short_vec.into_value(scope);
