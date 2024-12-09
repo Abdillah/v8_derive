@@ -223,4 +223,47 @@ mod tests {
         let s: OptionalObject = OptionalObject::try_from_value(&object, scope).expect("failed to deserialize");
         assert_eq!(s.opt, None);
     }
+
+    #[test]
+    fn should_be_able_to_parse_nested_objects() {
+        setup::setup_test();
+        let isolate = &mut v8::Isolate::new(CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        // Child object
+        let object = v8::Object::new(scope);
+        // yes_no
+        let js_key = v8::String::new(scope, "yes_no").unwrap().into();
+        let js_bool_val = v8::Boolean::new(scope, true).into();
+        object.set(scope, js_key, js_bool_val);
+        // name
+        let js_key = v8::String::new(scope, "name").unwrap().into();
+        let js_bool_val = v8::String::new(scope, "Marcel").unwrap().into();
+        object.set(scope, js_key, js_bool_val);
+        // age
+        let js_key = v8::String::new(scope, "age").unwrap().into();
+        let js_bool_val = v8::Integer::new(scope, 30).into();
+        object.set(scope, js_key, js_bool_val);
+        // opt
+        let js_key = v8::String::new(scope, "opt").unwrap().into();
+        let js_bool_val = v8::Integer::new(scope, 42).into();
+        object.set(scope, js_key, js_bool_val);
+        // avg
+        let js_key = v8::String::new(scope, "avg").unwrap().into();
+        let js_bool_val = v8::Number::new(scope, 42.42).into();
+        object.set(scope, js_key, js_bool_val);
+
+        // Parent object
+        let parent_object = v8::Object::new(scope);
+        let js_key = v8::String::new(scope, "nested").unwrap().into();
+        parent_object.set(scope, js_key, object.into());
+        let parent_object: Local<'_, Value> = parent_object.cast();
+
+        // Deserialize
+        let p: ParentObject = ParentObject::try_from_value(&parent_object, scope).expect("failed to deserialize");
+        let s = p.nested;
+        assert!(s.yes_no);
+    }
 }
