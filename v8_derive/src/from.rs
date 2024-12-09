@@ -1,6 +1,7 @@
 //! This module contains the `TryFromValue` trait which is used to convert a `v8::Value` into a Rust type.
 
 use crate::{errors, helpers::*, try_as_vec};
+use std::{collections::HashMap, hash::BuildHasher};
 
 /// The `TryFromValue` trait is used to convert a `v8::Value` into a Rust type.
 pub trait TryFromValue {
@@ -21,6 +22,19 @@ where
         scope: &'a mut v8::HandleScope<'_, v8::Context>,
     ) -> errors::Result<Self> {
         try_as_vec(input, scope)
+    }
+}
+
+impl<T, S> TryFromValue for HashMap<String, T, S>
+where
+    T: TryFromValue,
+    S: BuildHasher + Default,
+{
+    fn try_from_value<'a>(
+        input: &'a v8::Local<'a, v8::Value>,
+        scope: &'a mut v8::HandleScope<'_, v8::Context>,
+    ) -> errors::Result<Self> {
+        try_as_hashmap(input, scope)
     }
 }
 

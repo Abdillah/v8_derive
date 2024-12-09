@@ -1,5 +1,7 @@
 //! This module provides a trait to convert a Rust type into a v8 Value.
 
+use std::{collections::HashMap, hash::BuildHasher};
+
 /// The `IntoValue` trait is used to convert a Rust type into a v8 Value.
 pub trait IntoValue {
     fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value>;
@@ -76,9 +78,28 @@ where
     }
 }
 
+impl<T, S> IntoValue for HashMap<String, T, S>
+where
+    T: IntoValue,
+    S: BuildHasher,
+{
+    fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
+        let object = v8::Map::new(scope);
+
+        for (key, value) in self {
+            let js_key = v8::String::new(scope, &key).unwrap().into();
+            let js_val = value.into_value(scope);
+            object.set(scope, js_key, js_val);
+        }
+
+        object.into()
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{into::IntoValue, setup};
+    use crate::{into::IntoValue, setup, TryFromValue};
+    use std::collections::HashMap;
     use v8::{ContextOptions, CreateParams};
 
     #[test]
@@ -100,5 +121,25 @@ mod tests {
             let value = array.get_index(scope, i).unwrap();
             assert_eq!(value.to_int32(scope).unwrap().value(), i as i32 + 1);
         }
+    }
+
+    #[test]
+    fn can_convert_into_a_js_map() {
+        setup::setup_test();
+        let isolate = &mut v8::Isolate::new(CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        let map: HashMap<String, i32> =
+            [("one".to_string(), 1), ("two".to_string(), 2), ("three".to_string(), 3)].into();
+
+        // Convert the map into a JS value
+        let map_value = map.into_value(scope);
+
+        // cast the value to a map
+        let map = HashMap::<String, i32>::try_from_value(&map_value, scope).expect("Expected a map");
+        assert_eq!(map.len(), 3);
+        assert_eq!(map.get("one"), Some(&1));
     }
 }

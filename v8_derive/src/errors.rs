@@ -27,6 +27,10 @@ pub enum Error {
     ExpectedF64,
     #[error("Conversion failed; Value out of range")]
     OutOfRange,
+    #[error("Conversion failed; Expected Map")]
+    ExpectedMap,
+    #[error("Conversion failed; Failed to get property names")]
+    FailedToGetPropertyNames,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

@@ -1,4 +1,6 @@
 use crate::{errors, from::TryFromValue};
+use std::{collections::HashMap, hash::BuildHasher};
+use v8::GetPropertyNamesArgs;
 
 pub fn get_field_as<'a, T>(
     field_name: &str,
@@ -160,6 +162,57 @@ where
 
         let element = T::try_from_value(&element, scope)?;
         result.push(element);
+    }
+
+    Ok(result)
+}
+
+pub fn try_as_hashmap<'a, T, S>(
+    input: &'a v8::Local<'a, v8::Value>,
+    scope: &'a mut v8::HandleScope<'_, v8::Context>,
+) -> errors::Result<HashMap<String, T, S>>
+where
+    T: TryFromValue,
+    S: BuildHasher + Default,
+{
+    if !input.is_map() || !input.is_object() {
+        return Err(errors::Error::ExpectedMap);
+    };
+
+    let mut result: HashMap<String, T, S> = HashMap::with_hasher(S::default());
+
+    if input.is_map() {
+        let js_map: v8::Local<v8::Map> = input.try_cast()?;
+        let js_array = js_map.as_array(scope); // js_array is twice the size of the map; odd indexes are keys, even indexes are values
+        for i in (0..js_array.length()).step_by(2) {
+            let (Some(key), Some(value)) = (js_array.get_index(scope, i), js_array.get_index(scope, i + 1)) else {
+                continue;
+            };
+
+            let key = key.to_rust_string_lossy(scope);
+            let value = T::try_from_value(&value, scope)?;
+            result.insert(key, value);
+        }
+
+        return Ok(result);
+    }
+
+    // object
+    let js_object: v8::Local<v8::Object> = input.try_cast()?;
+    let keys = js_object
+        .get_own_property_names(scope, GetPropertyNamesArgs::default())
+        .ok_or(errors::Error::FailedToGetPropertyNames)?;
+
+    for i in 0..keys.length() {
+        let key = keys
+            .get_index(scope, i)
+            .ok_or(errors::Error::FailedToGetPropertyNames)?;
+        let value = js_object
+            .get(scope, key)
+            .ok_or(errors::Error::FailedToGetPropertyNames)?;
+        let value = T::try_from_value(&value, scope)?;
+        let key = key.to_rust_string_lossy(scope);
+        result.insert(key, value);
     }
 
     Ok(result)
