@@ -8,8 +8,15 @@ These annotations make it easier to convert JavaScript Values to Rust structs an
 
 See the [v8_derive_example](https://github.com/mibes404/v8_derive/tree/main/v8_derive_sample) for a complete example.
 
+`Cargo.toml`
+```toml
+[dependencies]
+v8_derive = "*"
+v8_derive_macros = "*"
+```
+
+`Main.rs`
 ```rust
-use v8::{ContextOptions, CreateParams};
 use v8_derive::{IntoValue, TryFromValue};
 use v8_derive_macros::{FromValue, IntoValue};
 
@@ -43,6 +50,7 @@ fn main() {
 - `Option<T>` where `T` is one of the above types
 - `struct` where all fields are one of the above types
 - `Vec<T>` where `T` is one of the above types
+- `HashMap<String, T>` where `T` is one of the above types
 
 ## DISCLAIMER
 
