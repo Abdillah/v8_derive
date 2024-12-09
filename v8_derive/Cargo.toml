@@ -10,4 +10,4 @@ repository = "https://github.com/mibes404/v8_derive.git"
 [dependencies]
 v8 = "130"
 thiserror = "2.0"
-v8_derive_macros = { path = "../v8_derive_macros" }
+v8_derive_macros = { path = "../v8_derive_macros", version = "0.1.0" }
