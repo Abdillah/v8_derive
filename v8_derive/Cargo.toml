@@ -2,6 +2,7 @@
 name = "v8_derive"
 version = "0.1.0"
 edition = "2021"
+authors = ["Marcel Ibes <mibes@avaya.com>"]
 
 [dependencies]
 v8 = "130"
