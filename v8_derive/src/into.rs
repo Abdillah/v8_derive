@@ -1,3 +1,6 @@
+//! This module provides a trait to convert a Rust type into a v8 Value.
+
+/// The `IntoValue` trait is used to convert a Rust type into a v8 Value.
 pub trait IntoValue {
     fn into_value<'a>(self, scope: &'_ mut v8::ContextScope<'_, v8::HandleScope<'a>>) -> v8::Local<'a, v8::Value>;
 }

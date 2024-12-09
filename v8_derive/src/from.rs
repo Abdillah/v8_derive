@@ -1,5 +1,8 @@
+//! This module contains the `TryFromValue` trait which is used to convert a `v8::Value` into a Rust type.
+
 use crate::{errors, helpers::*, try_as_vec};
 
+/// The `TryFromValue` trait is used to convert a `v8::Value` into a Rust type.
 pub trait TryFromValue {
     fn try_from_value<'a>(
         input: &'a v8::Local<'a, v8::Value>,
