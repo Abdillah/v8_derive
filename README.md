@@ -12,13 +12,14 @@ See the [v8_derive_example](https://github.com/mibes404/v8_derive/tree/main/v8_d
 ```toml
 [dependencies]
 v8_derive = "*"
-v8_derive_macros = "*"
 ```
 
 `Main.rs`
 ```rust
-use v8_derive::{IntoValue, TryFromValue};
-use v8_derive_macros::{FromValue, IntoValue};
+use v8_derive::{
+    macros::{FromValue, IntoValue},
+    IntoValue, TryFromValue,
+};
 
 #[derive(FromValue, IntoValue)]
 struct SimpleObject {

@@ -1,6 +1,8 @@
 use v8::{ContextOptions, CreateParams};
-use v8_derive::{IntoValue, TryFromValue};
-use v8_derive_macros::{FromValue, IntoValue};
+use v8_derive::{
+    macros::{FromValue, IntoValue},
+    IntoValue, TryFromValue,
+};
 
 #[derive(FromValue, IntoValue)]
 struct SimpleObject {
