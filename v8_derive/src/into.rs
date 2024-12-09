@@ -78,8 +78,9 @@ where
     }
 }
 
-impl<T, S> IntoValue for HashMap<String, T, S>
+impl<K, T, S> IntoValue for HashMap<K, T, S>
 where
+    K: ToString,
     T: IntoValue,
     S: BuildHasher,
 {
@@ -87,7 +88,7 @@ where
         let object = v8::Map::new(scope);
 
         for (key, value) in self {
-            let js_key = v8::String::new(scope, &key).unwrap().into();
+            let js_key = v8::String::new(scope, &key.to_string()).unwrap().into();
             let js_val = value.into_value(scope);
             object.set(scope, js_key, js_val);
         }
@@ -131,8 +132,7 @@ mod tests {
         let context = v8::Context::new(scope, ContextOptions::default());
         let scope = &mut v8::ContextScope::new(scope, context);
 
-        let map: HashMap<String, i32> =
-            [("one".to_string(), 1), ("two".to_string(), 2), ("three".to_string(), 3)].into();
+        let map: HashMap<&str, i32> = [("one", 1), ("two", 2), ("three", 3)].into();
 
         // Convert the map into a JS value
         let map_value = map.into_value(scope);

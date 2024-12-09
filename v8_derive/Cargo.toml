@@ -1,7 +1,7 @@
 [package]
 name = "v8_derive"
 description = "Derive macros and helpers for Rusty v8"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 authors = ["Marcel Ibes <mibes@avaya.com>"]
 license = "MIT"
