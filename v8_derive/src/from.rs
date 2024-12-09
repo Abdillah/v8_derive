@@ -89,6 +89,11 @@ mod tests {
         nested: SimpleObject,
     }
 
+    #[derive(FromValue)]
+    struct ObjectWithVec {
+        vec: Vec<i32>,
+    }
+
     #[test]
     fn should_be_able_to_handle_incomplete_values() {
         setup::setup_test();
@@ -265,5 +270,31 @@ mod tests {
         let p: ParentObject = ParentObject::try_from_value(&parent_object, scope).expect("failed to deserialize");
         let s = p.nested;
         assert!(s.yes_no);
+    }
+
+    #[test]
+    fn can_deserialize_an_object_with_a_vec() {
+        setup::setup_test();
+        let isolate = &mut v8::Isolate::new(CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        // Child object
+        let object = v8::Object::new(scope);
+        let js_key = v8::String::new(scope, "vec").unwrap().into();
+        let js_array = v8::Array::new(scope, 3);
+        let js_val_1 = v8::Integer::new(scope, 1);
+        js_array.set_index(scope, 0, js_val_1.into());
+        let js_val_2 = v8::Integer::new(scope, 2);
+        js_array.set_index(scope, 1, js_val_2.into());
+        let js_val_3 = v8::Integer::new(scope, 3);
+        js_array.set_index(scope, 2, js_val_3.into());
+        object.set(scope, js_key, js_array.into());
+        let object: Local<'_, Value> = object.cast();
+
+        // Deserialize
+        let p: ObjectWithVec = ObjectWithVec::try_from_value(&object, scope).expect("failed to deserialize");
+        assert_eq!(p.vec, vec![1, 2, 3]);
     }
 }
