@@ -83,6 +83,8 @@ impl_try_from_value! {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use crate::{self as v8_derive, from::TryFromValue, setup};
     use v8::{ContextOptions, CreateParams, Local, Value};
     use v8_derive_macros::FromValue;
@@ -313,5 +315,44 @@ mod tests {
         // Deserialize
         let p: ObjectWithVec = ObjectWithVec::try_from_value(&object, scope).expect("failed to deserialize");
         assert_eq!(p.vec, vec![1, 2, 3]);
+    }
+
+    #[test]
+    #[allow(clippy::float_cmp)]
+    fn should_be_able_to_parse_a_simple_object_to_hashmap() {
+        setup::setup_test();
+        let isolate = &mut v8::Isolate::new(CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+        let object = v8::Object::new(scope);
+        // yes_no
+        let js_key = v8::String::new(scope, "yes_no").unwrap().into();
+        let js_bool_val = v8::Boolean::new(scope, true).into();
+        object.set(scope, js_key, js_bool_val);
+        // name
+        let js_key = v8::String::new(scope, "name").unwrap().into();
+        let js_bool_val = v8::String::new(scope, "Marcel").unwrap().into();
+        object.set(scope, js_key, js_bool_val);
+        // age
+        let js_key = v8::String::new(scope, "age").unwrap().into();
+        let js_bool_val = v8::Integer::new(scope, 30).into();
+        object.set(scope, js_key, js_bool_val);
+        // opt
+        let js_key = v8::String::new(scope, "opt").unwrap().into();
+        let js_bool_val = v8::Integer::new(scope, 42).into();
+        object.set(scope, js_key, js_bool_val);
+        // avg
+        let js_key = v8::String::new(scope, "avg").unwrap().into();
+        let js_bool_val = v8::Number::new(scope, 42.42).into();
+        object.set(scope, js_key, js_bool_val);
+
+        let object: Local<'_, Value> = object.cast();
+        let s: HashMap<String, String> = HashMap::try_from_value(&object, scope).expect("failed to deserialize");
+        assert_eq!(s.get("yes_no"), Some(&"true".to_string()));
+        assert_eq!(s.get("name"), Some(&"Marcel".to_string()));
+        assert_eq!(s.get("age"), Some(&"30".to_string()));
+        assert_eq!(s.get("opt"), Some(&"42".to_string()));
+        assert_eq!(s.get("avg"), Some(&"42.42".to_string()));
     }
 }

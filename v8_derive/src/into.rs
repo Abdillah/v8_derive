@@ -135,7 +135,7 @@ mod tests {
         let map: HashMap<&str, i32> = [("one", 1), ("two", 2), ("three", 3)].into();
 
         // Convert the map into a JS value
-        let map_value = map.into_value(scope);
+        let map_value: v8::Local<'_, v8::Value> = map.into_value(scope);
 
         // cast the value to a map
         let map = HashMap::<String, i32>::try_from_value(&map_value, scope).expect("Expected a map");
