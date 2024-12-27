@@ -70,10 +70,7 @@ pub fn try_as_string<'a>(
     input: &'a v8::Local<'a, v8::Value>,
     scope: &'a mut v8::HandleScope<'_, v8::Context>,
 ) -> errors::Result<String> {
-    if !input.is_string() {
-        return Err(errors::Error::ExpectedString);
-    };
-
+    // try to convert the value to String anyway
     Ok(input.to_rust_string_lossy(scope))
 }
 
@@ -175,7 +172,7 @@ where
     T: TryFromValue,
     S: BuildHasher + Default,
 {
-    if !input.is_map() || !input.is_object() {
+    if !(input.is_map() || input.is_object()) {
         return Err(errors::Error::ExpectedMap);
     };
 
