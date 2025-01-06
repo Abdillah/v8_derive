@@ -21,6 +21,8 @@ pub enum Error {
     ExpectedString,
     #[error("Conversion failed; Expected Int32")]
     ExpectedI32,
+    #[error("Conversion failed; Expected Uint32")]
+    ExpectedU32,
     #[error("Conversion failed; Expected BigInt")]
     ExpectedI64,
     #[error("Conversion failed; Expected Number")]

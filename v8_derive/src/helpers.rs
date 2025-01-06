@@ -59,10 +59,8 @@ pub fn try_as_bool<'a>(
     input: &'a v8::Local<'a, v8::Value>,
     scope: &'a mut v8::HandleScope<'_, v8::Context>,
 ) -> errors::Result<bool> {
-    if !input.is_boolean() {
-        return Err(errors::Error::ExpectedBoolean);
-    };
-
+    // do not check if boolean, JS will answer something, using
+    // the boolean values will do the logic from JS exported to the Rust translation
     Ok(input.boolean_value(scope))
 }
 
@@ -78,10 +76,7 @@ pub fn try_as_i32<'a>(
     input: &'a v8::Local<'a, v8::Value>,
     scope: &'a mut v8::HandleScope<'_, v8::Context>,
 ) -> errors::Result<i32> {
-    if !input.is_int32() {
-        return Err(errors::Error::ExpectedI32);
-    };
-
+    // use the framework to get the internal convertion
     input.int32_value(scope).ok_or(errors::Error::ExpectedI32)
 }
 
@@ -89,21 +84,19 @@ pub fn try_as_u32<'a>(
     input: &'a v8::Local<'a, v8::Value>,
     scope: &'a mut v8::HandleScope<'_, v8::Context>,
 ) -> errors::Result<u32> {
-    if !input.is_uint32() {
-        return Err(errors::Error::ExpectedI32);
+    if input.is_uint32() {
+        return input.uint32_value(scope).ok_or(errors::Error::ExpectedU32);
     };
-
-    input.uint32_value(scope).ok_or(errors::Error::ExpectedI32)
+    // use the framework to get the internal convertion
+    u32::try_from(input.to_big_int(scope).ok_or(errors::Error::ExpectedU32)?.i64_value().0)
+        .map_err(|_| errors::Error::OutOfRange)
 }
 
 pub fn try_as_i64<'a>(
     input: &'a v8::Local<'a, v8::Value>,
     scope: &'a mut v8::HandleScope<'_, v8::Context>,
 ) -> errors::Result<i64> {
-    if !input.is_big_int() {
-        return Err(errors::Error::ExpectedI64);
-    };
-
+    // use the framework to get the internal convertion
     let i = input.to_big_int(scope).ok_or(errors::Error::ExpectedI64)?;
     Ok(i.i64_value().0)
 }
@@ -112,10 +105,7 @@ pub fn try_as_f64<'a>(
     input: &'a v8::Local<'a, v8::Value>,
     scope: &'a mut v8::HandleScope<'_, v8::Context>,
 ) -> errors::Result<f64> {
-    if !input.is_number() {
-        return Err(errors::Error::ExpectedF64);
-    };
-
+    // use the framework to get the internal convertion
     input.number_value(scope).ok_or(errors::Error::ExpectedF64)
 }
 
@@ -219,6 +209,12 @@ where
 pub(crate) mod setup {
     use std::sync::Once;
 
+    use v8::Value;
+
+    use crate::{try_as_i32, try_as_u32};
+
+    use super::{try_as_bool, try_as_i8};
+
     /// Set up global state for a test
     pub(crate) fn setup_test() {
         initialize_once();
@@ -235,5 +231,324 @@ pub(crate) mod setup {
             );
             v8::V8::initialize();
         });
+    }
+
+    #[test]
+    fn test_try_boolean() {
+        // given
+        // - v8 is all ok
+        setup_test();
+        let isolate = &mut v8::Isolate::new(v8::CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, v8::ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        // given
+        // - straight true value
+        let value: v8::Local<'_, Value> = v8::Boolean::new(scope, true).into();
+        // when
+        // - try to convert
+        let result = try_as_bool(&value, scope);
+        // then
+        // - expect to be able to convert and result in true
+        assert!(result.expect("Expected to be able to convert and be true"));
+
+        // given
+        // - straight false value
+        let value: v8::Local<'_, Value> = v8::Boolean::new(scope, false).into();
+        // when
+        // - try to convert
+        let result = try_as_bool(&value, scope);
+        // then
+        // - expect to be able to convert and result in false
+        assert!(!result.expect("Expected to be able to convert and be false"));
+    }
+
+    #[test]
+    fn test_try_boolean_from_undefined_null() {
+        // given
+        // - v8 is all ok
+        setup_test();
+        let isolate = &mut v8::Isolate::new(v8::CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, v8::ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        // given
+        // - undefined value
+        let value: v8::Local<'_, Value> = v8::undefined(scope).into();
+        // when
+        // - try to convert
+        let result = try_as_bool(&value, scope);
+        // then
+        // - expect to be able to convert and result in false
+        assert!(!result.expect("Expected to be able to convert and be false"));
+
+        // given
+        // - null value
+        let value: v8::Local<'_, Value> = v8::null(scope).into();
+        // when
+        // - try to convert
+        let result = try_as_bool(&value, scope);
+        // then
+        // - expect to be able to convert and result in false
+        assert!(!result.expect("Expected to be able to convert and be false"));
+    }
+
+    #[test]
+    fn test_try_boolean_from_number() {
+        // given
+        // - v8 is all ok
+        setup_test();
+        let isolate = &mut v8::Isolate::new(v8::CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, v8::ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        // given
+        // - non zero value
+        let value: v8::Local<'_, Value> = v8::Integer::new(scope, 1).into();
+        // when
+        // - try to convert
+        let result = try_as_bool(&value, scope);
+        // then
+        // - expect to be able to convert and result in true
+        assert!(result.expect("Expected to be able to convert and be true"));
+
+        // given
+        // - zero value
+        let value: v8::Local<'_, Value> = v8::Number::new(scope, 0.0).into();
+        // when
+        // - try to convert
+        let result = try_as_bool(&value, scope);
+        // then
+        // - expect to be able to convert and result in false
+        assert!(!result.expect("Expected to be able to convert and be false"));
+    }
+
+    #[test]
+    fn test_try_boolean_from_string() {
+        // given
+        // - v8 is all ok
+        setup_test();
+        let isolate = &mut v8::Isolate::new(v8::CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, v8::ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        // given
+        // - empty string
+        let value: v8::Local<'_, Value> = v8::String::new(scope, "").unwrap().into();
+        // when
+        // - try to convert
+        let result = try_as_bool(&value, scope);
+        // then
+        // - expect to be able to convert and result in false
+        assert!(!result.expect("Expected to be able to convert and be false"));
+
+        // given
+        // - non-empty value
+        let value: v8::Local<'_, Value> = v8::String::new(scope, "abc").unwrap().into();
+        // when
+        // - try to convert
+        let result = try_as_bool(&value, scope);
+        // then
+        // - expect to be able to convert and result in true
+        assert!(result.expect("Expected to be able to convert and be true"));
+    }
+
+    #[test]
+    fn test_try_i32_from_string() {
+        // given
+        // - v8 is all ok
+        setup_test();
+        let isolate = &mut v8::Isolate::new(v8::CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, v8::ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        // given
+        // - empty string
+        let value: v8::Local<'_, Value> = v8::String::new(scope, "").unwrap().into();
+        // when
+        // - try to convert
+        let result = try_as_i32(&value, scope);
+        // then
+        // - expect to be able to convert and result in false
+        assert_eq!(0, result.expect("Expected to be able to convert"));
+
+        // given
+        // - negative string
+        let value: v8::Local<'_, Value> = v8::String::new(scope, "-10").unwrap().into();
+        // when
+        // - try to convert
+        let result = try_as_i32(&value, scope);
+        // then
+        // - expect to be able to convert and result in false
+        assert_eq!(-10, result.expect("Expected to be able to convert"));
+
+        // given
+        // - integer value
+        let value: v8::Local<'_, Value> = v8::String::new(scope, "123").unwrap().into();
+        // when
+        // - try to convert
+        let result = try_as_i32(&value, scope);
+        // then
+        // - expect to be able to convert and result in false
+        assert_eq!(123, result.expect("Expected to be able to convert"));
+
+        // given
+        // - float value
+        let value: v8::Local<'_, Value> = v8::String::new(scope, "123.789").unwrap().into();
+        // when
+        // - try to convert
+        let result = try_as_i32(&value, scope);
+        // then
+        // - expect to be able to convert and result in true
+        assert_eq!(123, result.expect("Expected to be able to convert"));
+    }
+
+    #[test]
+    fn test_try_i32_from_undefined_null() {
+        // given
+        // - v8 is all ok
+        setup_test();
+        let isolate = &mut v8::Isolate::new(v8::CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, v8::ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        // given
+        // - undefined value
+        let value: v8::Local<'_, Value> = v8::undefined(scope).into();
+        // when
+        // - try to convert
+        let result = try_as_i32(&value, scope);
+        // then
+        // - expect to be able to convert and result in false
+        assert_eq!(0, result.expect("Expected to be able to convert"));
+
+        // given
+        // - null value
+        let value: v8::Local<'_, Value> = v8::null(scope).into();
+        // when
+        // - try to convert
+        let result = try_as_i32(&value, scope);
+        // then
+        // - expect to be able to convert and result in true
+        assert_eq!(0, result.expect("Expected to be able to convert"));
+    }
+
+    #[test]
+    fn test_try_u32_from_string() {
+        // given
+        // - v8 is all ok
+        setup_test();
+        let isolate = &mut v8::Isolate::new(v8::CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, v8::ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        // given
+        // - empty string
+        let value: v8::Local<'_, Value> = v8::String::new(scope, "").unwrap().into();
+        // when
+        // - try to convert
+        let result = try_as_u32(&value, scope);
+        // then
+        // - expect to be able to convert and result in false
+        assert_eq!(0, result.expect("Expected to be able to convert"));
+
+        // given
+        // - negative string
+        let value: v8::Local<'_, Value> = v8::String::new(scope, "-10").unwrap().into();
+        // when
+        // - try to convert
+        let result = try_as_u32(&value, scope);
+        // then
+        // - expect to be able to convert and result in false
+        result.expect_err("Expected to NOT be able to convert");
+
+        // given
+        // - integer value
+        let value: v8::Local<'_, Value> = v8::String::new(scope, "123").unwrap().into();
+        // when
+        // - try to convert
+        let result = try_as_u32(&value, scope);
+        // then
+        // - expect to be able to convert and result in false
+        assert_eq!(123, result.expect("Expected to be able to convert"));
+
+        // given
+        // - float value
+        let value: v8::Local<'_, Value> = v8::String::new(scope, "123.789").unwrap().into();
+        // when
+        // - try to convert
+        let result = try_as_u32(&value, scope);
+        // then
+        // - expect to be able to convert and result in true
+        result.expect_err("Expected to NOT be able to convert");
+    }
+
+    #[test]
+    fn test_try_u32_from_undefined_null() {
+        // given
+        // - v8 is all ok
+        setup_test();
+        let isolate = &mut v8::Isolate::new(v8::CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, v8::ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        // given
+        // - undefined value
+        let value: v8::Local<'_, Value> = v8::undefined(scope).into();
+        // when
+        // - try to convert
+        let result = try_as_u32(&value, scope);
+        // then
+        // - expect to be able to convert and result in false
+        assert_eq!(0, result.expect("Expected to be able to convert"));
+
+        // given
+        // - null value
+        let value: v8::Local<'_, Value> = v8::null(scope).into();
+        // when
+        // - try to convert
+        let result = try_as_u32(&value, scope);
+        // then
+        // - expect to be able to convert and result in true
+        assert_eq!(0, result.expect("Expected to be able to convert"));
+    }
+
+    #[test]
+    fn test_try_i8_from_string() {
+        // given
+        // - v8 is all ok
+        setup_test();
+        let isolate = &mut v8::Isolate::new(v8::CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, v8::ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        // given
+        // - out of range
+        let value: v8::Local<'_, Value> = v8::String::new(scope, "-10").unwrap().into();
+        // when
+        // - try to convert
+        let result = try_as_i8(&value, scope);
+        // then
+        // - expect to be able to convert and result in false
+        assert_eq!(-10 as i8, result.expect("Expected to be able to convert"));
+
+        // given
+        // - out of range
+        let value: v8::Local<'_, Value> = v8::String::new(scope, "1024").unwrap().into();
+        // when
+        // - try to convert
+        let result = try_as_i8(&value, scope);
+        // then
+        // - expect to be able to convert and result in false
+        result.expect_err("Expected to NOT be able to convert");
     }
 }
