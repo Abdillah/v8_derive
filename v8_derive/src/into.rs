@@ -7,6 +7,11 @@ pub trait IntoValue {
     fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value>;
 }
 
+/// The `IntoObject` trait is used to convert a Rust type into a v8 Value.
+pub trait IntoObject {
+    fn into_object<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value>;
+}
+
 impl IntoValue for bool {
     fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
         v8::Boolean::new(scope, self).into()
@@ -97,8 +102,28 @@ where
     }
 }
 
+impl<K, T, S> IntoObject for HashMap<K, T, S>
+where
+    K: IntoValue,
+    T: IntoValue,
+    S: BuildHasher,
+{
+    fn into_object<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
+        let object = v8::Object::new(scope);
+
+        for (key, value) in self {
+            let js_key = key.into_value(scope);
+            let js_val = value.into_value(scope);
+            object.set(scope, js_key, js_val);
+        }
+
+        object.into()
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use crate::into::IntoObject;
     use crate::{into::IntoValue, setup, TryFromValue};
     use std::collections::HashMap;
     use v8::{ContextOptions, CreateParams};
@@ -141,5 +166,69 @@ mod tests {
         let map = HashMap::<String, i32>::try_from_value(&map_value, scope).expect("Expected a map");
         assert_eq!(map.len(), 3);
         assert_eq!(map.get("one"), Some(&1));
+    }
+
+    #[test]
+    fn can_convert_into_a_js_object() {
+        setup::setup_test();
+        let isolate = &mut v8::Isolate::new(CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        let map: HashMap<String, i32> =
+            [("one".to_string(), 1), ("two".to_string(), 2), ("three".to_string(), 3)].into();
+
+        // Convert the map into a JS Object value
+        let obj_value: v8::Local<'_, v8::Value> = map.into_object(scope);
+
+        // cast the value to a map
+        let map = HashMap::<String, i32>::try_from_value(&obj_value, scope).expect("Expected a map");
+        assert_eq!(map.len(), 3);
+        assert_eq!(map.get("one"), Some(&1));
+    }
+
+    #[test]
+    fn can_convert_non_str_keys_into_a_js_object() {
+        setup::setup_test();
+        let isolate = &mut v8::Isolate::new(CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        let map: HashMap<i32, String> =
+            [(1, "one".to_string()), (2, "two".to_string()), (3, "three".to_string())].into();
+
+        // Convert the map into a JS Object value
+        let obj_value: v8::Local<'_, v8::Value> = map.into_object(scope);
+
+        // cast the value to a map
+        let map = HashMap::<String, i32>::try_from_value(&obj_value, scope).expect("Expected a map");
+        assert_eq!(map.len(), 3);
+        assert_eq!(map.get("one"), Some(&1));
+    }
+
+    #[test]
+    fn can_convert_into_a_string_type_js_map() {
+        setup::setup_test();
+        let isolate = &mut v8::Isolate::new(CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        let map: HashMap<String, String> = [
+            ("one".to_string(), "1".to_string()),
+            ("two".to_string(), "2".to_string()),
+            ("three".to_string(), "3".to_string()),
+        ]
+        .into();
+
+        // Convert the map into a JS value
+        let map_value: v8::Local<'_, v8::Value> = map.into_value(scope);
+
+        // cast the value to a map
+        let map = HashMap::<String, String>::try_from_value(&map_value, scope).expect("Expected a map");
+        assert_eq!(map.len(), 3);
+        assert_eq!(map.get("one"), Some(&"1".to_string()));
     }
 }
