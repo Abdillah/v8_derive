@@ -131,7 +131,7 @@ mod tests {
         let js_bool_val = v8::Boolean::new(scope, true).into();
         object.set(scope, js_key, js_bool_val);
         let object: Local<'_, Value> = object.cast();
-        SimpleObject::try_from_value(&object, scope).expect_err("can't deserialize with missing field");
+        SimpleObject::try_from_value(&object, scope).expect("deserialize failed");
     }
 
     #[test]

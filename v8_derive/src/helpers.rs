@@ -87,7 +87,10 @@ pub fn try_as_u32<'a>(
     if input.is_uint32() {
         return input.uint32_value(scope).ok_or(errors::Error::ExpectedU32);
     };
-    // use the framework to get the internal convertion
+    if input.is_null_or_undefined() {
+        return Ok(0);
+    }
+    // use the framework to get the internal conversion
     u32::try_from(input.to_big_int(scope).ok_or(errors::Error::ExpectedU32)?.i64_value().0)
         .map_err(|_| errors::Error::OutOfRange)
 }

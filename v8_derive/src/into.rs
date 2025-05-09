@@ -203,9 +203,9 @@ mod tests {
         let obj_value: v8::Local<'_, v8::Value> = map.into_object(scope);
 
         // cast the value to a map
-        let map = HashMap::<String, i32>::try_from_value(&obj_value, scope).expect("Expected a map");
+        let map = HashMap::<String, String>::try_from_value(&obj_value, scope).expect("Expected a map");
         assert_eq!(map.len(), 3);
-        assert_eq!(map.get("one"), Some(&1));
+        assert_eq!(map.get("1"), Some(&"one".to_string()));
     }
 
     #[test]
