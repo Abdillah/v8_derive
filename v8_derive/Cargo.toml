@@ -1,13 +1,13 @@
 [package]
 name = "v8_derive"
 description = "Derive macros and helpers for Rusty v8"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 authors = ["Marcel Ibes <mibes@avaya.com>"]
 license = "MIT"
 repository = "https://github.com/mibes404/v8_derive.git"
 
 [dependencies]
-v8 = "130"
+v8 = "137"
 thiserror = "2.0"
-v8_derive_macros = { path = "../v8_derive_macros", version = "0.1.7" }
+v8_derive_macros = { path = "../v8_derive_macros", version = "0.1.8" }
