@@ -85,7 +85,25 @@ where
 
 impl<K, T, S> IntoValue for HashMap<K, T, S>
 where
-    K: ToString,
+    K: IntoValue,
+    T: IntoValue,
+    S: BuildHasher,
+{
+    fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
+        let object = v8::Map::new(scope);
+
+        for (key, value) in self {
+            let js_key = key.into_value(scope);
+            let js_val = value.into_value(scope);
+            object.set(scope, js_key, js_val);
+        }
+
+        object.into()
+    }
+}
+
+impl<T, S> IntoValue for HashMap<&str, T, S>
+where
     T: IntoValue,
     S: BuildHasher,
 {
@@ -201,6 +219,26 @@ mod tests {
 
         // Convert the map into a JS Object value
         let obj_value: v8::Local<'_, v8::Value> = map.into_object(scope);
+
+        // cast the value to a map
+        let map = HashMap::<String, String>::try_from_value(&obj_value, scope).expect("Expected a map");
+        assert_eq!(map.len(), 3);
+        assert_eq!(map.get("1"), Some(&"one".to_string()));
+    }
+
+    #[test]
+    fn can_convert_non_str_keys_into_a_js_map() {
+        setup::setup_test();
+        let isolate = &mut v8::Isolate::new(CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        let map: HashMap<i32, String> =
+            [(1, "one".to_string()), (2, "two".to_string()), (3, "three".to_string())].into();
+
+        // Convert the map into a JS value
+        let obj_value: v8::Local<'_, v8::Value> = map.into_value(scope);
 
         // cast the value to a map
         let map = HashMap::<String, String>::try_from_value(&obj_value, scope).expect("Expected a map");
