@@ -339,7 +339,7 @@ dependencies = [
 
 [[package]]
 name = "v8_derive"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "thiserror",
  "v8",
@@ -356,7 +356,7 @@ dependencies = [
 
 [[package]]
 name = "v8_derive_macros"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "proc-macro2",
  "quote",
