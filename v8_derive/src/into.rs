@@ -78,7 +78,8 @@ where
 
         for (i, value) in self.into_iter().enumerate() {
             let el: v8::Local<'_, v8::Value> = value.into_value(scope);
-            array.set_index(scope, i as u32, el);
+            let idx = u32::try_from(i).unwrap_or(u32::MAX);
+            array.set_index(scope, idx, el);
         }
 
         array.into()

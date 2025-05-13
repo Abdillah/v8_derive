@@ -112,6 +112,7 @@ pub fn try_as_f64<'a>(
     input.number_value(scope).ok_or(errors::Error::ExpectedF64)
 }
 
+#[allow(clippy::cast_possible_truncation)]
 pub fn try_as_f32<'a>(
     input: &'a v8::Local<'a, v8::Value>,
     scope: &'a mut v8::HandleScope<'_, v8::Context>,

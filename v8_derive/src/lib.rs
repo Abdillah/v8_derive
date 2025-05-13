@@ -7,7 +7,7 @@ pub use into::IntoValue;
 pub mod errors;
 pub mod from;
 
-#[allow(dead_code)]
+#[allow(dead_code, clippy::missing_errors_doc)]
 pub mod helpers;
 
 pub mod into;
