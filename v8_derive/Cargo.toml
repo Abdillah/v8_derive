@@ -11,3 +11,8 @@ repository = "https://github.com/mibes404/v8_derive.git"
 v8 = "137"
 thiserror = "2.0"
 v8_derive_macros = { path = "../v8_derive_macros", version = "0.1.9" }
+serde_json = { version = "1", optional = true }
+
+[features]
+default = []
+json = ["serde_json"]

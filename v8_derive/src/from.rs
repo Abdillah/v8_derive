@@ -1,5 +1,8 @@
 //! This module contains the `TryFromValue` trait which is used to convert a `v8::Value` into a Rust type.
 
+#[cfg(feature = "json")]
+use crate::json::v8_to_json_value;
+
 use crate::{errors, helpers::*, try_as_vec};
 use std::{collections::HashMap, hash::BuildHasher};
 
@@ -52,6 +55,17 @@ where
 
         let value = T::try_from_value(input, scope)?;
         Ok(Some(value))
+    }
+}
+
+#[cfg(feature = "json")]
+impl TryFromValue for serde_json::Value {
+    fn try_from_value<'a>(
+        input: &'a v8::Local<'a, v8::Value>,
+        scope: &'a mut v8::HandleScope<'_, v8::Context>,
+    ) -> errors::Result<Self> {
+        let value = v8_to_json_value(scope, *input)?;
+        Ok(value)
     }
 }
 
@@ -147,15 +161,33 @@ mod tests {
         let bool_val = bool::try_from_value(&js_bool_val, scope).unwrap();
         assert!(bool_val);
 
+        #[cfg(feature = "json")]
+        {
+            let json_val = serde_json::Value::try_from_value(&js_bool_val, scope).unwrap();
+            assert_eq!(json_val, serde_json::Value::Bool(true));
+        }
+
         // String
         let js_string_val = v8::String::new(scope, "Hello, World!").unwrap().into();
         let string_val = String::try_from_value(&js_string_val, scope).unwrap();
         assert_eq!(string_val, "Hello, World!");
 
+        #[cfg(feature = "json")]
+        {
+            let json_val = serde_json::Value::try_from_value(&js_string_val, scope).unwrap();
+            assert_eq!(json_val, serde_json::Value::String("Hello, World!".to_string()));
+        }
+
         // i32
         let js_int_val = v8::Integer::new(scope, 42).into();
         let int_val = i32::try_from_value(&js_int_val, scope).unwrap();
         assert_eq!(int_val, 42);
+
+        #[cfg(feature = "json")]
+        {
+            let json_val = serde_json::Value::try_from_value(&js_int_val, scope).unwrap();
+            assert_eq!(json_val, serde_json::Value::Number(serde_json::Number::from(42)));
+        }
 
         // Vec<i32>
         let js_array = v8::Array::new(scope, 3);
@@ -167,6 +199,19 @@ mod tests {
         js_array.set_index(scope, 2, js_val_3.into());
         let array_val = Vec::<i32>::try_from_value(&js_array.into(), scope).unwrap();
         assert_eq!(array_val, vec![1, 2, 3]);
+
+        #[cfg(feature = "json")]
+        {
+            let json_val = serde_json::Value::try_from_value(&js_array.into(), scope).unwrap();
+            assert_eq!(
+                json_val,
+                serde_json::Value::Array(vec![
+                    serde_json::Value::Number(serde_json::Number::from(1)),
+                    serde_json::Value::Number(serde_json::Number::from(2)),
+                    serde_json::Value::Number(serde_json::Number::from(3))
+                ])
+            );
+        }
 
         // Option<i32>
         let js_null = v8::null(scope).into();

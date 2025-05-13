@@ -7,5 +7,8 @@ pub mod from;
 pub mod helpers;
 pub mod into;
 
+#[cfg(feature = "json")]
+mod json;
+
 // re-export v8_derive_macros
 pub extern crate v8_derive_macros as macros;

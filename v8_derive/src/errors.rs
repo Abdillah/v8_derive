@@ -33,6 +33,8 @@ pub enum Error {
     ExpectedMap,
     #[error("Conversion failed; Failed to get property names")]
     FailedToGetPropertyNames,
+    #[error("Conversion failed; Unsupported value type")]
+    UnsupportedValueType,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
