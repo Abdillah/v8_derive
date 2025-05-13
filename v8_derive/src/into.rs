@@ -46,7 +46,7 @@ impl IntoValue for f64 {
 
 impl IntoValue for f32 {
     fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
-        (self as f64).into_value(scope)
+        f64::from(self).into_value(scope)
     }
 }
 
@@ -150,8 +150,10 @@ impl IntoValue for serde_json::Value {
 
 #[cfg(test)]
 mod tests {
-    use crate::into::IntoObject;
-    use crate::{into::IntoValue, setup, TryFromValue};
+    use crate::{
+        into::{IntoObject, IntoValue},
+        setup, TryFromValue,
+    };
     use std::collections::HashMap;
     use v8::{ContextOptions, CreateParams};
 

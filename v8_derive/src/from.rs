@@ -2,8 +2,14 @@
 
 #[cfg(feature = "json")]
 use crate::json::v8_to_json_value;
-
-use crate::{errors, helpers::*, try_as_vec};
+use crate::{
+    errors,
+    helpers::{
+        try_as_bool, try_as_f32, try_as_f64, try_as_hashmap, try_as_i32, try_as_i64, try_as_i8, try_as_string,
+        try_as_u32,
+    },
+    try_as_vec,
+};
 use std::{collections::HashMap, hash::BuildHasher};
 
 /// The `TryFromValue` trait is used to convert a `v8::Value` into a Rust type.
@@ -97,9 +103,8 @@ impl_try_from_value! {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-
     use crate::{self as v8_derive, from::TryFromValue, setup};
+    use std::collections::HashMap;
     use v8::{ContextOptions, CreateParams, Local, Value};
     use v8_derive_macros::FromValue;
 

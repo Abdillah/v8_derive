@@ -10,7 +10,7 @@ pub fn get_field_as<'a, T>(
 ) -> errors::Result<T> {
     if !input.is_object() {
         return Err(errors::Error::ExpectedObject);
-    };
+    }
 
     let js_object: v8::Local<v8::Object> = input.try_cast()?;
     let js_key = v8::String::new(scope, field_name)
@@ -31,7 +31,7 @@ pub fn get_optional_field_as<'a, T>(
 ) -> errors::Result<Option<T>> {
     if !input.is_object() {
         return Err(errors::Error::ExpectedObject);
-    };
+    }
 
     let js_object: v8::Local<v8::Object> = input.try_cast()?;
     let js_key = v8::String::new(scope, field_name)
@@ -86,7 +86,7 @@ pub fn try_as_u32<'a>(
 ) -> errors::Result<u32> {
     if input.is_uint32() {
         return input.uint32_value(scope).ok_or(errors::Error::ExpectedU32);
-    };
+    }
     if input.is_null_or_undefined() {
         return Ok(0);
     }
@@ -137,7 +137,7 @@ where
 {
     if !input.is_array() {
         return Err(errors::Error::ExpectedArray);
-    };
+    }
 
     let array: v8::Local<v8::Array> = input.try_cast()?;
     let length = array.length();
@@ -167,7 +167,7 @@ where
 {
     if !(input.is_map() || input.is_object()) {
         return Err(errors::Error::ExpectedMap);
-    };
+    }
 
     let mut result: HashMap<String, T, S> = HashMap::with_hasher(S::default());
 
@@ -210,13 +210,10 @@ where
 
 #[cfg(test)]
 pub(crate) mod setup {
-    use std::sync::Once;
-
-    use v8::Value;
-
-    use crate::{try_as_i32, try_as_u32};
-
     use super::{try_as_bool, try_as_i8};
+    use crate::{try_as_i32, try_as_u32};
+    use std::sync::Once;
+    use v8::Value;
 
     /// Set up global state for a test
     pub(crate) fn setup_test() {
@@ -542,7 +539,7 @@ pub(crate) mod setup {
         let result = try_as_i8(&value, scope);
         // then
         // - expect to be able to convert and result in false
-        assert_eq!(-10 as i8, result.expect("Expected to be able to convert"));
+        assert_eq!(-10_i8, result.expect("Expected to be able to convert"));
 
         // given
         // - out of range

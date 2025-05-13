@@ -1,5 +1,7 @@
-use crate::errors::{Error, Result};
-use crate::{IntoValue, TryFromValue};
+use crate::{
+    errors::{Error, Result},
+    IntoValue, TryFromValue,
+};
 use v8::{HandleScope, Local, Value};
 
 /// Convert a V8 Object to a JSON Value
@@ -8,34 +10,34 @@ use v8::{HandleScope, Local, Value};
 /// In case of conversion errors, or if the value is not supported, an error is returned.
 pub(crate) fn v8_to_json_value(scope: &mut HandleScope, value: Local<Value>) -> Result<serde_json::Value> {
     match () {
-        _ if value.is_string() => {
+        () if value.is_string() => {
             let value = String::try_from_value(&value, scope)?;
             Ok(serde_json::Value::String(value))
         }
-        _ if value.is_int32() => {
+        () if value.is_int32() => {
             let value = i32::try_from_value(&value, scope)?;
             Ok(serde_json::Value::from(value))
         }
-        _ if value.is_uint32() => {
+        () if value.is_uint32() => {
             let value = u32::try_from_value(&value, scope)?;
             Ok(serde_json::Value::from(value))
         }
-        _ if value.is_big_int() => {
+        () if value.is_big_int() => {
             let value = i64::try_from_value(&value, scope)?;
             Ok(serde_json::Value::from(value))
         }
-        _ if value.is_number() => {
+        () if value.is_number() => {
             let value = f64::try_from_value(&value, scope)?;
             Ok(serde_json::Value::from(value))
         }
-        _ if value.is_boolean() => {
+        () if value.is_boolean() => {
             let value = bool::try_from_value(&value, scope)?;
             Ok(serde_json::Value::from(value))
         }
-        _ if value.is_null() => Ok(serde_json::Value::Null),
-        _ if value.is_array() => v8_array_to_json(scope, value),
-        _ if value.is_object() => v8_object_to_json(scope, value),
-        _ => Err(Error::UnsupportedValueType),
+        () if value.is_null() => Ok(serde_json::Value::Null),
+        () if value.is_array() => v8_array_to_json(scope, value),
+        () if value.is_object() => v8_object_to_json(scope, value),
+        () => Err(Error::UnsupportedValueType),
     }
 }
 
