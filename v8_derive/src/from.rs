@@ -14,6 +14,10 @@ use std::{collections::HashMap, hash::BuildHasher};
 
 /// The `TryFromValue` trait is used to convert a `v8::Value` into a Rust type.
 pub trait TryFromValue {
+    /// Converts a `v8::Value` into a Rust type.
+    ///
+    /// # Errors
+    /// In case of conversion errors, or if the value is not supported, an error is returned.
     fn try_from_value<'a>(
         input: &'a v8::Local<'a, v8::Value>,
         scope: &'a mut v8::HandleScope<'_, v8::Context>,

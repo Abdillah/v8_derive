@@ -49,7 +49,7 @@ fn v8_object_to_json(scope: &mut HandleScope, value: Local<Value>) -> Result<ser
         return Err(Error::FailedToGetPropertyNames);
     };
     let length = properties.length();
-    let mut json_object = serde_json::Map::new();
+    let mut json_object = serde_json::Map::with_capacity(length as usize);
     for i in 0..length {
         let Some(key) = properties.get_index(scope, i) else {
             return Err(Error::ExpectedObject);

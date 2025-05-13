@@ -1,10 +1,15 @@
+#![warn(clippy::pedantic)]
+
 pub use from::TryFromValue;
 pub use helpers::*;
 pub use into::IntoValue;
 
 pub mod errors;
 pub mod from;
+
+#[allow(dead_code)]
 pub mod helpers;
+
 pub mod into;
 
 #[cfg(feature = "json")]

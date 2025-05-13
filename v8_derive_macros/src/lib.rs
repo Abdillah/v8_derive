@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic)]
+
 mod helpers;
 
 extern crate proc_macro2;

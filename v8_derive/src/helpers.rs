@@ -18,7 +18,7 @@ pub fn get_field_as<'a, T>(
         .ok_or(errors::Error::InvalidField(field_name.to_string()))?;
     let js_value = js_object
         .get(scope, js_key)
-        .ok_or(errors::Error::FieldNoFound(field_name.to_string()))?;
+        .ok_or(errors::Error::FieldNotFound(field_name.to_string()))?;
 
     parse_fn(&js_value, scope)
 }

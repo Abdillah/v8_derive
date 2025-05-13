@@ -14,7 +14,7 @@ pub enum Error {
         source: v8::DataError,
     },
     #[error("Field {0} not found")]
-    FieldNoFound(String),
+    FieldNotFound(String),
     #[error("Invalid field name: {0}")]
     InvalidField(String),
     #[error("Conversion failed; Expected String")]
