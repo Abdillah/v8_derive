@@ -383,7 +383,7 @@ dependencies = [
 
 [[package]]
 name = "v8_derive"
-version = "0.1.10"
+version = "0.1.11"
 dependencies = [
  "serde_json",
  "thiserror",
@@ -401,7 +401,7 @@ dependencies = [
 
 [[package]]
 name = "v8_derive_macros"
-version = "0.1.10"
+version = "0.1.11"
 dependencies = [
  "proc-macro2",
  "quote",
