@@ -1,5 +1,7 @@
 //! This module provides a trait to convert a Rust type into a v8 Value.
 
+#[cfg(feature = "json")]
+use crate::json::json_to_v8;
 use std::{collections::HashMap, hash::BuildHasher};
 
 /// The `IntoValue` trait is used to convert a Rust type into a v8 Value.
@@ -111,7 +113,7 @@ where
         let object = v8::Map::new(scope);
 
         for (key, value) in self {
-            let js_key = v8::String::new(scope, &key.to_string()).unwrap().into();
+            let js_key = v8::String::new(scope, key).unwrap().into();
             let js_val = value.into_value(scope);
             object.set(scope, js_key, js_val);
         }
@@ -136,6 +138,13 @@ where
         }
 
         object.into()
+    }
+}
+
+#[cfg(feature = "json")]
+impl IntoValue for serde_json::Value {
+    fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
+        json_to_v8(scope, self)
     }
 }
 
@@ -268,5 +277,38 @@ mod tests {
         let map = HashMap::<String, String>::try_from_value(&map_value, scope).expect("Expected a map");
         assert_eq!(map.len(), 3);
         assert_eq!(map.get("one"), Some(&"1".to_string()));
+    }
+
+    #[cfg(feature = "json")]
+    #[test]
+    fn can_convert_json_into_a_js_object() {
+        /// The constant 18446744073709552000 represents an approximation of the maximum value of an
+        /// unsigned 64-bit integer (u64), which is 2^64 - 1 (or 18446744073709551615).
+        /// The slight difference (+385) is due to the limitations of converting a u64 to a String or
+        /// f64 in JavaScript, as JavaScript's Number type uses double-precision floating-point
+        /// representation, which cannot precisely represent all 64-bit integers.
+        const MAX_JS_UINT: &str = "18446744073709552000";
+
+        let json = serde_json::json!({
+            "name": "John",
+            "age": 30,
+            "very_large_number": u64::MAX,
+        });
+
+        setup::setup_test();
+        let isolate = &mut v8::Isolate::new(CreateParams::default());
+        let scope = &mut v8::HandleScope::new(isolate);
+        let context = v8::Context::new(scope, ContextOptions::default());
+        let scope = &mut v8::ContextScope::new(scope, context);
+
+        // Convert the JSON into a JS Object value
+        let obj_value: v8::Local<'_, v8::Value> = json.into_value(scope);
+
+        // cast the value to a map
+        let map = HashMap::<String, String>::try_from_value(&obj_value, scope).expect("Expected a map");
+        assert_eq!(map.len(), 3);
+        assert_eq!(map.get("name"), Some(&"John".to_string()));
+        assert_eq!(map.get("age"), Some(&"30".to_string()));
+        assert_eq!(map.get("very_large_number"), Some(&MAX_JS_UINT.to_string()));
     }
 }
