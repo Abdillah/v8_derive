@@ -1,16 +1,16 @@
 [package]
 name = "v8_derive"
 description = "Derive macros and helpers for Rusty v8"
-version = "0.1.11"
+version = "0.2.0"
 edition = "2021"
 authors = ["Marcel Ibes <mibes@avaya.com>"]
 license = "MIT"
 repository = "https://github.com/mibes404/v8_derive.git"
 
 [dependencies]
-v8 = "137"
+v8 = "139"
 thiserror = "2.0"
-v8_derive_macros = { path = "../v8_derive_macros", version = "0.1.11" }
+v8_derive_macros = { path = "../v8_derive_macros", version = "0.2.0" }
 serde_json = { version = "1", optional = true }
 
 [features]
