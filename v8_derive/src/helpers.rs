@@ -1,6 +1,7 @@
 use crate::{errors, from::TryFromValue};
+use deno_core::v8;
+use deno_core::v8::GetPropertyNamesArgs;
 use std::{collections::HashMap, hash::BuildHasher};
-use v8::GetPropertyNamesArgs;
 
 pub fn get_field_as<'a, T>(
     field_name: &str,
@@ -213,8 +214,9 @@ where
 pub(crate) mod setup {
     use super::{try_as_bool, try_as_i8};
     use crate::{try_as_i32, try_as_u32};
+    use deno_core::v8;
+    use deno_core::v8::Value;
     use std::sync::Once;
-    use v8::Value;
 
     /// Set up global state for a test
     pub(crate) fn setup_test() {

@@ -1,3 +1,4 @@
+use deno_core::v8;
 use thiserror::Error as ThisError;
 
 #[derive(ThisError, Debug)]

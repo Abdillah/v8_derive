@@ -2,6 +2,7 @@
 
 #[cfg(feature = "json")]
 use crate::json::json_to_v8;
+use deno_core::v8;
 use std::{collections::HashMap, hash::BuildHasher};
 
 /// The `IntoValue` trait is used to convert a Rust type into a v8 Value.
@@ -155,8 +156,9 @@ mod tests {
         into::{IntoObject, IntoValue},
         setup, TryFromValue,
     };
+    use deno_core::v8;
+    use deno_core::v8::{ContextOptions, CreateParams};
     use std::collections::HashMap;
-    use v8::{ContextOptions, CreateParams};
 
     #[test]
     #[allow(clippy::cast_possible_wrap)]

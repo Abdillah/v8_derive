@@ -1,4 +1,5 @@
-use v8::{ContextOptions, CreateParams};
+use deno_core::v8;
+use deno_core::v8::{ContextOptions, CreateParams};
 use v8_derive::{
     macros::{FromValue, IntoValue},
     IntoValue, TryFromValue,

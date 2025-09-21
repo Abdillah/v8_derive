@@ -53,8 +53,8 @@ pub fn try_from_value(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 #[automatically_derived]
                 impl v8_derive::TryFromValue for #struct_identifier {
                     fn try_from_value<'a>(
-                        input: &'a v8::Local<'a, v8::Value>,
-                        scope: &'a mut v8::HandleScope<'_, v8::Context>,
+                        input: &'a deno_core::v8::Local<'a, deno_core::v8::Value>,
+                        scope: &'a mut deno_core::v8::HandleScope<'_, deno_core::v8::Context>,
                     ) -> v8_derive::errors::Result<Self>
                     where
                         Self: Sized {
@@ -96,7 +96,7 @@ pub fn into_value(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
                 let field_impl = match &field.ty {
                     syn::Type::Path(_type_path) => {
                         quote! {
-                            let js_key = v8::String::new(scope, stringify!(#identifier)).unwrap().into();
+                            let js_key = deno_core::v8::String::new(scope, stringify!(#identifier)).unwrap().into();
                             let js_val = self.#identifier.into_value(scope);
                             object.set(scope, js_key, js_val);
                         }
@@ -110,7 +110,7 @@ pub fn into_value(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
             quote! {
                 #[automatically_derived]
                 impl v8_derive::IntoValue for #struct_identifier {
-                    fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
+                    fn into_value<'a>(self, scope: &mut deno_core::v8::HandleScope<'a>) -> deno_core::v8::Local<'a, deno_core::v8::Value> {
                         let object = v8::Object::new(scope);
                         #implementation
                         object.into()

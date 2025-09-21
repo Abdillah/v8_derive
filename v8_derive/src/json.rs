@@ -2,7 +2,7 @@ use crate::{
     errors::{Error, Result},
     IntoValue, TryFromValue,
 };
-use v8::{HandleScope, Local, Value};
+use deno_core::v8::{HandleScope, Local, Value};
 
 /// Convert a V8 Object to a JSON Value
 ///

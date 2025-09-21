@@ -10,6 +10,7 @@ use crate::{
     },
     try_as_vec,
 };
+use deno_core::v8;
 use std::{collections::HashMap, hash::BuildHasher};
 
 /// The `TryFromValue` trait is used to convert a `v8::Value` into a Rust type.
@@ -108,8 +109,9 @@ impl_try_from_value! {
 #[cfg(test)]
 mod tests {
     use crate::{self as v8_derive, from::TryFromValue, setup};
+    use deno_core::v8;
+    use deno_core::v8::{ContextOptions, CreateParams, Local, Value};
     use std::collections::HashMap;
-    use v8::{ContextOptions, CreateParams, Local, Value};
     use v8_derive_macros::FromValue;
 
     #[derive(Debug, FromValue)]

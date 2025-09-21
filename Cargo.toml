@@ -1,3 +1,6 @@
 [workspace]
 members = ["v8_derive_sample", "v8_derive", "v8_derive_macros"]
 resolver = "2"
+
+[patch.crates-io]
+timezone_provider = { version = "=0.0.14", registry = "crates-io-2" }
