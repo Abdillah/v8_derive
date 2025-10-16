@@ -2,6 +2,8 @@
 
 #[cfg(feature = "json")]
 use crate::json::json_to_v8;
+#[cfg(feature = "chrono")]
+use chrono::DateTime;
 use deno_core::v8;
 use std::{collections::HashMap, hash::BuildHasher};
 
@@ -147,6 +149,26 @@ where
 impl IntoValue for serde_json::Value {
     fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
         json_to_v8(scope, self)
+    }
+}
+
+#[cfg(feature = "chrono")]
+impl IntoValue for chrono::DateTime<chrono::FixedOffset> {
+    fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
+        let date_str = self.format("%+").to_string();
+        v8::String::new(scope, &date_str)
+            .unwrap_or(v8::String::empty(scope))
+            .into()
+    }
+}
+
+#[cfg(feature = "chrono")]
+impl IntoValue for chrono::NaiveDateTime {
+    fn into_value<'a>(self, scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::Value> {
+        let date_str = self.format("%+").to_string();
+        v8::String::new(scope, &date_str)
+            .unwrap_or(v8::String::empty(scope))
+            .into()
     }
 }
 
